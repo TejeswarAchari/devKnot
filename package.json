@@ -1,0 +1,21 @@
+{
+  "name": "devknot",
+  "version": "1.0.0",
+  "description": "Knots the Developers Accross the Globe",
+  "keywords": [
+    "JavaScript",
+    "Node",
+    "Js"
+  ],
+  "license": "ISC",
+  "author": "Vadla Tejeswar Achari",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start":"npm src/app.js",
+    "dev":"nodemon src/app.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
