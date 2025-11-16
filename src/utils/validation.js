@@ -19,7 +19,10 @@ const validateEditProfileData = (data) => {
   return isUpdateAllowed;
 }
 
+
 module.exports = {
   validateSignUpData,
   validateEditProfileData,
 };
+
+

@@ -1,5 +1,6 @@
 const express = require("express")
 const connectDB = require("./config/database")
+const cors = require("cors")
 const validator = require("validator")
 const{ validateSignUpData} = require("./utils/validation")
 const bcrypt = require("bcrypt")
@@ -8,7 +9,33 @@ const cookieParser = require("cookie-parser")
 const {userAuth} =require ("./middlewares/auth") ;
 const User = require("./models/user")
 
-const app = express()
+
+const app = express()// ------------ SIMPLE CORS MIDDLEWARE -------------
+app.use((req, res, next) => {
+  // Frontend origin
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  // Allow cookies
+  res.header("Access-Control-Allow-Credentials", "true");
+  // Allowed methods
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PATCH,PUT,DELETE,OPTIONS"
+  );
+  // Allowed headers
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  // Handle preflight
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204); // No content, CORS OK
+  }
+
+  next();
+});
+
+
 app.use(express.json())
 app.use(cookieParser())
 

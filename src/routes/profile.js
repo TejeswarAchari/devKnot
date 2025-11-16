@@ -28,12 +28,16 @@ Object.keys(req.body).forEach((key)=>{
 } 
 );
 await loggedInUser.save();
-res.send("Profile Updated Successfully");
+  res.status(200).json({ data: loggedInUser });
 
    }catch(err){
     res.status(400).send("Error: "+err.message )
    }
 });
+
+
+
+
 
 profileRouter.patch("/profile/password", userAuth, async (req, res) => {
   try {
@@ -64,7 +68,8 @@ profileRouter.patch("/profile/password", userAuth, async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    res.send("Password updated successfully");
+       res.status(200).json({ data: user });
+
   } catch (err) {
     res.status(400).send("Error: " + err.message);
   }

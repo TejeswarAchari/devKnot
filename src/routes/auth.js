@@ -67,14 +67,14 @@ authRouter.post("/login", async (req, res) => {
       res.cookie("token", token);
 
       // If valid → success
-      return res.send("User Logged In Successfully");
+      return res.send(user);
     } 
     else {
       throw new Error("Invalid Credentials");
     }
 
   } catch (err) {
-    return res.status(400).send("ERROR: " + err.message);
+    return res.status(400).send(err.message);
   }
 });
 

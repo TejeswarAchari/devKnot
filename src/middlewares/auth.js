@@ -5,14 +5,14 @@ const userAuth = async (req, res, next) => {
   try {
     const { token } = req.cookies;
     if (!token) {
-      throw new Error("Authentication token missing");
+      return  res.status(401).send("Please Login!")
     }
 
     const decodedObj = await jwt.verify(token, "TejaSecretKey");
     const { userId } = decodedObj;
 
     const user = await User.findById(userId);
-    console.log(user);
+    
     if (!user) {
       throw new Error("User not found");
     }
