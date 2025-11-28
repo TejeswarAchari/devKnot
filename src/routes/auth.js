@@ -5,9 +5,63 @@ const User = require("../models/user");
 
 const authRouter = express.Router();
 
+// authRouter.post("/signup", async (req, res) => {
+
+//   try {
+//     validateSignUpData(req);
+//     const { firstName, lastName, email, password, skills } = req.body;
+
+//     // validate skills if provided
+//     if (skills !== undefined) {
+//       if (!Array.isArray(skills)) {
+//         throw new Error("Skills must be an array of strings");
+//       }
+//       if (skills.length > 10) {
+//         throw new Error("Skills cannot be more than 10");
+//       }
+//     }
+//   // normalize email same as schema: trim & lowercase
+//     const normalizedEmail = String(email).trim().toLowerCase();
+
+//         // 1) Fast pre-check to give a friendly message
+//     const existing = await User.findOne({ email: normalizedEmail });
+//     if (existing) {
+//       return res.status(409).send("Email already registered");
+//     }
+
+//     const passwordHash = await bcrypt.hash(password, 10);
+
+//     const userObj = {
+//       firstName,
+//       lastName,
+//       email: normalizedEmail,
+//       password: passwordHash,
+//       skills: skills ?? []   // default to [] if not provided
+//     };
+
+//     const user = new User(userObj);
+//    const savedUser =  await user.save();
+//  const token = await savedUser.getJWT();
+        
+//       res.cookie("token", token,{
+//         expires: new Date(Date.now() + 8 * 3600000),
+//       });
+
+//       // If valid → success
+//       return res.send(user);
+
+//     res.json({Message:"User Signed Up Successfully",data: savedUser});
+//   } catch (err) {
+//   }
+// });
+
+// LOGIN ROUTE
+
 authRouter.post("/signup", async (req, res) => {
   try {
-    validateSignUpData(req);
+    // validate incoming data
+    validateSignUpData(req); // your function expects req and uses req.body
+
     const { firstName, lastName, email, password, skills } = req.body;
 
     // validate skills if provided
@@ -19,10 +73,10 @@ authRouter.post("/signup", async (req, res) => {
         throw new Error("Skills cannot be more than 10");
       }
     }
-  // normalize email same as schema: trim & lowercase
+
+    // normalize email same as schema
     const normalizedEmail = String(email).trim().toLowerCase();
 
-        // 1) Fast pre-check to give a friendly message
     const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(409).send("Email already registered");
@@ -35,18 +89,32 @@ authRouter.post("/signup", async (req, res) => {
       lastName,
       email: normalizedEmail,
       password: passwordHash,
-      skills: skills ?? []   // default to [] if not provided
+      skills: skills ?? [],
     };
 
     const user = new User(userObj);
-    await user.save();
-    res.send("User Signed Up Successfully");
+    const savedUser = await user.save();
+
+    const token = await savedUser.getJWT();
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      expires: new Date(Date.now() + 8 * 3600000),
+      // sameSite / secure depending on your frontend-backend ports & https
+    });
+
+    // ✅ single success response, structure matches frontend usage
+    return res.status(201).json({
+      message: "User Signed Up Successfully",
+      data: savedUser,
+    });
+
   } catch (err) {
-    return res.status(400).send(err.message);
+    console.error("SIGNUP ERROR:", err);
+    return res.status(400).send(err.message || "Signup failed");
   }
 });
 
-// LOGIN ROUTE
 authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -66,7 +134,7 @@ authRouter.post("/login", async (req, res) => {
         
       res.cookie("token", token);
 
-      // If valid → success
+      // If valid → success  
       return res.send(user);
     } 
     else {

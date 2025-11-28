@@ -26,7 +26,7 @@ userRouter.get(
     }
   }
 );
-
+//previous code 
 // Get all accepted connections of the logged-in user
 userRouter.get(
   "/user/connections",
@@ -40,7 +40,7 @@ userRouter.get(
           { toUserId: loggedInUser._id, status: "accepted" },
           { fromUserId: loggedInUser._id, status: "accepted" },
         ],
-      }).populate("fromUserId", "firstName lastName about gender skills photoUrl").populate("toUserId", "firstName lastName about gender skills photoUrl");
+      }).populate("fromUserId", "firstName lastName about age gender skills photoUrl").populate("toUserId", "firstName lastName about age gender skills photoUrl");
         
  const data = connectionRequests.map((row) => {
   if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
@@ -55,6 +55,9 @@ userRouter.get(
     }
   }
 );
+
+
+
 
 
 userRouter.get("/feed", userAuth, async (req, res) => {
