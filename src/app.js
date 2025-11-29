@@ -10,6 +10,8 @@ const {userAuth} =require ("./middlewares/auth") ;
 const User = require("./models/user")
 const http = require("http")
 const initializeSocket = require("./utils/socket")
+const path = require("path");
+
 
 
 const app = express()// ------------ SIMPLE CORS MIDDLEWARE -------------
@@ -38,6 +40,7 @@ app.use((req, res, next) => {
 });
 
 
+
 app.use(express.json())
 app.use(cookieParser())
 
@@ -51,7 +54,10 @@ app.use("/",authRouter)
 app.use("/",profileRouter)
 app.use("/",requestRouter)
 app.use("/",userRouter)
-app.use("/", chatRouter);   
+app.use("/", chatRouter);
+
+ 
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); 
 
 const server = http.createServer(app);
 initializeSocket(server)

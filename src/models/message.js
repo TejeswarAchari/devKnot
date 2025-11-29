@@ -19,8 +19,8 @@ const messageSchema = new mongoose.Schema(
     },
     text: {
       type: String,
-      required: true,
       trim: true,
+      default: "",
     },
     status: {
       type: String,
@@ -31,6 +31,17 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    // 🔽 NEW FIELDS FOR FILE/IMAGE
+    messageType: {
+      type: String,
+      enum: ["text", "image", "file"],
+      default: "text",
+    },
+    fileUrl: String,
+    fileName: String,
+    mimeType: String,
+    fileSize: Number,
   },
   { timestamps: true }
 );
