@@ -28,34 +28,73 @@ userRouter.get(
 );
 //previous code 
 // Get all accepted connections of the logged-in user
-userRouter.get(
-  "/user/connections",
-  userAuth,
-  async (req, res) => {
-    try {
-      const loggedInUser = req.user;
+// userRouter.get(
+//   "/user/connections",
+//   userAuth,
+//   async (req, res) => {
+//     try {
+//       const loggedInUser = req.user;
 
-      const connectionRequests = await ConnectionRequest.find({
-        $or: [
-          { toUserId: loggedInUser._id, status: "accepted" },
-          { fromUserId: loggedInUser._id, status: "accepted" },
-        ],
-      }).populate("fromUserId", "firstName lastName about age gender skills photoUrl").populate("toUserId", "firstName lastName about age gender skills photoUrl");
+//       const connectionRequests = await ConnectionRequest.find({
+//         $or: [
+//           { toUserId: loggedInUser._id, status: "accepted" },
+//           { fromUserId: loggedInUser._id, status: "accepted" },
+//         ],
+//       }).populate("fromUserId", "firstName lastName about age gender skills photoUrl").populate("toUserId", "firstName lastName about age gender skills photoUrl");
         
- const data = connectionRequests.map((row) => {
-  if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
-    return row.toUserId;
+//  const data = connectionRequests.map((row) => {
+//   if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
+//     return row.toUserId;
+//   }
+//   return row.fromUserId;
+// });
+
+//       res.json({ data });
+//     } catch (err) {
+//       res.status(400).send({ message: err.message });
+//     }
+//   }
+// );
+
+// routes/user.js (or wherever your userRouter is)
+
+// Get all accepted connections of the logged-in user
+userRouter.get("/user/connections", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+
+    const connectionRequests = await ConnectionRequest.find({
+      $or: [
+        { toUserId: loggedInUser._id, status: "accepted" },
+        { fromUserId: loggedInUser._id, status: "accepted" },
+      ],
+    }).select("fromUserId toUserId status"); // we just need ids here
+
+    // For each connection, resolve the "other user" from User collection
+    const data = await Promise.all(
+      connectionRequests.map(async (row) => {
+        const meId = loggedInUser._id.toString();
+
+        const fromId = row.fromUserId.toString();
+        const toId = row.toUserId.toString();
+
+        const otherUserId = fromId === meId ? toId : fromId;
+
+        // fetch full user doc
+        const otherUser = await User.findById(otherUserId).select(
+          "firstName lastName about age gender skills photoUrl"
+        );
+
+        return otherUser; // will be a clean user object
+      })
+    );
+
+    return res.json({ data });
+  } catch (err) {
+    console.error("ERROR in /user/connections:", err);
+    return res.status(400).send({ message: err.message });
   }
-  return row.fromUserId;
 });
-
-      res.json({ data });
-    } catch (err) {
-      res.status(400).send({ message: err.message });
-    }
-  }
-);
-
 
 
 
@@ -102,7 +141,7 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         { _id: { $ne: loggedInUser._id } },               // not me (extra safety)
       ],
     })
-      .select("firstName lastName about gender skills photoUrl") // e.g. "firstName lastName about gender skills photoUrl"
+      .select("firstName lastName about age  gender skills photoUrl") // e.g. "firstName lastName about gender skills photoUrl"
       .skip(skip)
       .limit(limit);
 
