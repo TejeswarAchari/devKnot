@@ -16,6 +16,7 @@ const dotenv = require("dotenv");
 dotenv.config(); // ⭐ load .env once here
 
 const app = express();
+app.set("trust proxy", 1); 
 
 // ⭐ use env-based origin so you can switch localhost → domain easily
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
