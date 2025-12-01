@@ -12,11 +12,12 @@ const uploadsDir = path.join(__dirname, "..", "uploads");
 
 // track online users by userId
 const onlineUsers = new Map(); // userId -> count of sockets
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
 const initializeSocket = (server) => {
   const io = socketIO(server, {
     cors: {
-      origin: process.env.CLIENT_ORIGIN,
+      origin:CLIENT_ORIGIN,
       credentials: true,
     },
   });
