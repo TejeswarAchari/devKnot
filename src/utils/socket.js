@@ -16,13 +16,14 @@ const onlineUsers = new Map(); // userId -> count of sockets
 const initializeSocket = (server) => {
   const io = socketIO(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: process.env.CLIENT_ORIGIN,
       credentials: true,
     },
   });
 
+
   io.on("connection", (socket) => {
-    console.log("Socket connected:", socket.id);
+    // console.log("Socket connected:", socket.id);
 
     // we will store userId on socket object
     socket.on("registerUser", ({ userId }) => {
@@ -66,7 +67,7 @@ const initializeSocket = (server) => {
 
     socket.on("joinChat", ({ firstName, userId, targetUserId }) => {
       const roomId = [userId, targetUserId].sort().join("_");
-      console.log(firstName + " joined room " + roomId);
+      // console.log(firstName + " joined room " + roomId);
       socket.join(roomId);
     });
 
@@ -204,7 +205,7 @@ const initializeSocket = (server) => {
               if (err) {
                 console.error("Error deleting file from disk:", err.message);
               } else {
-                console.log("Deleted file from disk:", fullPath);
+                // console.log("Deleted file from disk:", fullPath);
               }
             });
           } catch (err) {
@@ -254,7 +255,7 @@ const initializeSocket = (server) => {
         }
       }
 
-      console.log("Socket disconnected:", socket.id);
+      // console.log("Socket disconnected:", socket.id);
     });
 
     socket.on("checkUserOnline", ({ targetUserId }) => {
@@ -265,3 +266,5 @@ const initializeSocket = (server) => {
 };
 
 module.exports = initializeSocket;
+
+

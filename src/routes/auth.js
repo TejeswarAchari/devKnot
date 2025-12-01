@@ -1,14 +1,16 @@
-const express = require('express');
-const validateSignUpData = require("../utils/validation").validateSignUpData;
-const bcrypt = require("bcrypt");
-const User = require("../models/user");
+// const express = require('express');
+// const validateSignUpData = require("../utils/validation").validateSignUpData;
+// const bcrypt = require("bcrypt");
+// const User = require("../models/user");
 
-const authRouter = express.Router();
+// const authRouter = express.Router();
+
 
 // authRouter.post("/signup", async (req, res) => {
-
 //   try {
-//     validateSignUpData(req);
+//     // validate incoming data
+//     validateSignUpData(req); // your function expects req and uses req.body
+
 //     const { firstName, lastName, email, password, skills } = req.body;
 
 //     // validate skills if provided
@@ -20,10 +22,10 @@ const authRouter = express.Router();
 //         throw new Error("Skills cannot be more than 10");
 //       }
 //     }
-//   // normalize email same as schema: trim & lowercase
+
+//     // normalize email same as schema
 //     const normalizedEmail = String(email).trim().toLowerCase();
 
-//         // 1) Fast pre-check to give a friendly message
 //     const existing = await User.findOne({ email: normalizedEmail });
 //     if (existing) {
 //       return res.status(409).send("Email already registered");
@@ -36,27 +38,82 @@ const authRouter = express.Router();
 //       lastName,
 //       email: normalizedEmail,
 //       password: passwordHash,
-//       skills: skills ?? []   // default to [] if not provided
+//       skills: skills ?? [],
 //     };
 
 //     const user = new User(userObj);
-//    const savedUser =  await user.save();
-//  const token = await savedUser.getJWT();
-        
-//       res.cookie("token", token,{
-//         expires: new Date(Date.now() + 8 * 3600000),
-//       });
+//     const savedUser = await user.save();
 
-//       // If valid → success
-//       return res.send(user);
+//     const token = await savedUser.getJWT();
 
-//     res.json({Message:"User Signed Up Successfully",data: savedUser});
+//    res.cookie("token", token, {
+//   httpOnly: true,
+//   secure: process.env.NODE_ENV === "production",  // only https in production
+//   sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+//   expires: new Date(Date.now() + 8 * 3600000), // 8 hrs
+// });
+
+//     // ✅ single success response, structure matches frontend usage
+//     return res.status(201).json({
+//       message: "User Signed Up Successfully",
+//       data: savedUser,
+//     });
+
 //   } catch (err) {
+//     console.error("SIGNUP ERROR:", err);
+//     return res.status(400).send(err.message || "Signup failed");
 //   }
 // });
 
-// LOGIN ROUTE
 
+// authRouter.post("/login", async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     // 1. Find user
+//     const user = await User.findOne({ email: email });
+//     if (!user) {
+//       throw new Error("Invalid Credentials");
+//     }
+
+//     // 2. Compare entered password with hashed password in DB
+//     const isPasswordValid = await user.validatePassword(password);
+
+//     if (isPasswordValid) {
+     
+//       const token = await user.getJWT();
+        
+//       res.cookie("token", token);
+
+//       // If valid → success  
+//       return res.send(user);
+//     } 
+//     else {
+//       throw new Error("Invalid Credentials");
+//     }
+
+//   } catch (err) {
+//     return res.status(400).send(err.message);
+//   }
+// });
+
+// authRouter.post("/logout", (req, res) => {
+//   res.clearCookie("token");
+//   res.send("User Logged Out Successfully");
+// });
+
+// module.exports = authRouter;
+
+
+// File: routes/auth.js
+const express = require("express");
+const validateSignUpData = require("../utils/validation").validateSignUpData;
+const bcrypt = require("bcrypt");
+const User = require("../models/user");
+
+const authRouter = express.Router();
+
+// SIGNUP
 authRouter.post("/signup", async (req, res) => {
   try {
     // validate incoming data
@@ -97,10 +154,12 @@ authRouter.post("/signup", async (req, res) => {
 
     const token = await savedUser.getJWT();
 
+    // ✅ good as you wrote
     res.cookie("token", token, {
       httpOnly: true,
-      expires: new Date(Date.now() + 8 * 3600000),
-      // sameSite / secure depending on your frontend-backend ports & https
+      secure: process.env.NODE_ENV === "production", // only https in production
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      expires: new Date(Date.now() + 8 * 3600000), // 8 hrs
     });
 
     // ✅ single success response, structure matches frontend usage
@@ -108,19 +167,22 @@ authRouter.post("/signup", async (req, res) => {
       message: "User Signed Up Successfully",
       data: savedUser,
     });
-
   } catch (err) {
     console.error("SIGNUP ERROR:", err);
     return res.status(400).send(err.message || "Signup failed");
   }
 });
 
+// LOGIN
 authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // ⭐ normalize email same as signup
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     // 1. Find user
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       throw new Error("Invalid Credentials");
     }
@@ -129,25 +191,34 @@ authRouter.post("/login", async (req, res) => {
     const isPasswordValid = await user.validatePassword(password);
 
     if (isPasswordValid) {
-     
       const token = await user.getJWT();
-        
-      res.cookie("token", token);
 
-      // If valid → success  
+      // ⭐ use the SAME cookie options as signup
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        expires: new Date(Date.now() + 8 * 3600000),
+      });
+
+      // If valid → success
       return res.send(user);
-    } 
-    else {
+    } else {
       throw new Error("Invalid Credentials");
     }
-
   } catch (err) {
     return res.status(400).send(err.message);
   }
 });
 
+// LOGOUT
 authRouter.post("/logout", (req, res) => {
-  res.clearCookie("token");
+  // ⭐ clear cookie with matching flags (important for strict/sameSite/secure)
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  });
   res.send("User Logged Out Successfully");
 });
 

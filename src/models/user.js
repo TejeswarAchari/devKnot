@@ -71,7 +71,9 @@ const userSchema = new mongoose.Schema({
     },
     lastSeen: {
   type: Date,
+  
 },
+
    
 },{timestamps:true});
 
@@ -80,7 +82,7 @@ userSchema.methods.getJWT = async function(){
     const user = this;
     const token = await jwt.sign(
         { userId: user._id, email: user.email },    
-        "TejaSecretKey");
+        process.env.JWT_SECRET_KEY);  
     return token;
 }
 userSchema.methods.validatePassword = async function (passwordInputByUser) {

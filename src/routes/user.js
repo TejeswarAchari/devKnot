@@ -26,37 +26,7 @@ userRouter.get(
     }
   }
 );
-//previous code 
-// Get all accepted connections of the logged-in user
-// userRouter.get(
-//   "/user/connections",
-//   userAuth,
-//   async (req, res) => {
-//     try {
-//       const loggedInUser = req.user;
 
-//       const connectionRequests = await ConnectionRequest.find({
-//         $or: [
-//           { toUserId: loggedInUser._id, status: "accepted" },
-//           { fromUserId: loggedInUser._id, status: "accepted" },
-//         ],
-//       }).populate("fromUserId", "firstName lastName about age gender skills photoUrl").populate("toUserId", "firstName lastName about age gender skills photoUrl");
-        
-//  const data = connectionRequests.map((row) => {
-//   if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
-//     return row.toUserId;
-//   }
-//   return row.fromUserId;
-// });
-
-//       res.json({ data });
-//     } catch (err) {
-//       res.status(400).send({ message: err.message });
-//     }
-//   }
-// );
-
-// routes/user.js (or wherever your userRouter is)
 
 // Get all accepted connections of the logged-in user
 userRouter.get("/user/connections", userAuth, async (req, res) => {
