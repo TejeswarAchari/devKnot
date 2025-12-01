@@ -15,7 +15,7 @@ userRouter.get(
       const connectionRequests = await ConnectionRequest.find({
         toUserId: loggedInUser._id,
         status: "interested",
-      }).populate("fromUserId", "firstName lastName about gender skills photoUrl");
+      }).populate("fromUserId", "firstName lastName about gender skills photoUrl lastSeen");
 
       res.json({
         message: "Data fetched successfully",
@@ -82,7 +82,7 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 
         // fetch full user doc
         const otherUser = await User.findById(otherUserId).select(
-          "firstName lastName about age gender skills photoUrl"
+          "firstName lastName about age gender skills photoUrl lastSeen"
         );
 
         return otherUser; // will be a clean user object
@@ -141,7 +141,7 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         { _id: { $ne: loggedInUser._id } },               // not me (extra safety)
       ],
     })
-      .select("firstName lastName about age  gender skills photoUrl") // e.g. "firstName lastName about gender skills photoUrl"
+      .select("firstName lastName about age  gender skills photoUrl lastSeen") // e.g. "firstName lastName about gender skills photoUrl"
       .skip(skip)
       .limit(limit);
 

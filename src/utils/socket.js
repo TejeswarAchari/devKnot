@@ -1,10 +1,14 @@
+
+
+// backend/socket.js (your socket initialization file)
 const socketIO = require("socket.io");
 const Message = require("../models/message");
-const fs = require("fs");               // 👈 add
-const path = require("path");           // 👈 add
+const User = require("../models/user"); // ✅ add this
+const fs = require("fs");
+const path = require("path");
 
 // directory where uploads are stored
-const uploadsDir = path.join(__dirname, "..", "uploads"); // 👈 add
+const uploadsDir = path.join(__dirname, "..", "uploads");
 
 // track online users by userId
 const onlineUsers = new Map(); // userId -> count of sockets
@@ -32,6 +36,32 @@ const initializeSocket = (server) => {
 
       // broadcast this user online
       io.emit("userOnlineStatus", { userId, isOnline: true });
+    });
+
+    // 👇 NEW: send snapshot of all currently online users
+    socket.on("getOnlineUsers", () => {
+      const users = Array.from(onlineUsers.keys());
+      socket.emit("onlineUsersSnapshot", { users });
+    });
+
+     /* ⭐⭐⭐ IMPORTANT FIX ⭐⭐⭐
+       User is leaving the tab → force mark offline immediately
+    */
+    socket.on("manualDisconnect", async () => {
+      const userId = socket.userId;
+      if (!userId) return;
+
+      const count = onlineUsers.get(userId) || 0;
+      if (count <= 1) {
+        onlineUsers.delete(userId);
+        const lastSeen = new Date();
+        try {
+          await User.findByIdAndUpdate(userId, { lastSeen });
+        } catch {}
+        io.emit("userOnlineStatus", { userId, isOnline: false, lastSeen });
+      } else {
+        onlineUsers.set(userId, count - 1);
+      }
     });
 
     socket.on("joinChat", ({ firstName, userId, targetUserId }) => {
@@ -172,10 +202,7 @@ const initializeSocket = (server) => {
 
             fs.unlink(fullPath, (err) => {
               if (err) {
-                console.error(
-                  "Error deleting file from disk:",
-                  err.message
-                );
+                console.error("Error deleting file from disk:", err.message);
               } else {
                 console.log("Deleted file from disk:", fullPath);
               }
@@ -203,17 +230,30 @@ const initializeSocket = (server) => {
       }
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
       const userId = socket.userId;
+
       if (userId) {
         const current = onlineUsers.get(userId) || 0;
         if (current <= 1) {
           onlineUsers.delete(userId);
-          io.emit("userOnlineStatus", { userId, isOnline: false });
+
+          // SAVE lastSeen timestamp in DB
+          const lastSeen = new Date();
+          try {
+            await User.findByIdAndUpdate(userId, {
+              lastSeen,
+            });
+          } catch (err) {
+            console.error("Error saving lastSeen:", err);
+          }
+
+          io.emit("userOnlineStatus", { userId, isOnline: false, lastSeen });
         } else {
           onlineUsers.set(userId, current - 1);
         }
       }
+
       console.log("Socket disconnected:", socket.id);
     });
 
