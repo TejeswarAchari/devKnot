@@ -55,6 +55,11 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const server = http.createServer(app);
 initializeSocket(server);
 
+// Home Route
+app.get("/", (req, res) => {
+  res.send("Welcome to DevKnot API Server");
+});
+
 // GET by email using query param: /user?email=someone@example.com
 app.get("/user", async (req, res) => {
   const userEmail = req.query.email;
