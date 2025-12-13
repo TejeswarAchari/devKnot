@@ -1,4 +1,4 @@
-
+require("dotenv").config(); // 🔥 MUST BE FIRST LINE
 const express = require("express");
 const connectDB = require("./config/database");
 const cors = require("cors");
@@ -12,8 +12,6 @@ const User = require("./models/user");
 const http = require("http");
 const initializeSocket = require("./utils/socket");
 const path = require("path");
-const dotenv = require("dotenv");
-dotenv.config(); // ⭐ load .env once here
 
 const app = express();
 app.set("trust proxy", 1); 
