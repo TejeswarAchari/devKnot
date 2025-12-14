@@ -77,9 +77,6 @@ const userSchema = new mongoose.Schema({
    
 },{timestamps:true});
 
-// Index for faster email lookups
-userSchema.index({ email: 1 });
-
 userSchema.methods.getJWT = function(){
     
     const user = this;

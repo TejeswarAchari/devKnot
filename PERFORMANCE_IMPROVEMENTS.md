@@ -41,9 +41,8 @@ const data = connectionRequests.map((row) => {
 - Added compound index on `Message` model: `{ roomId: 1, createdAt: 1 }` for efficient chat history queries
 - Added indexes on `ConnectionRequest` model:
   - `{ toUserId: 1, status: 1 }` for received requests queries
-  - `{ fromUserId: 1, status: 1 }` for sent requests queries  
-  - `{ status: 1 }` for status-based queries
-- Added index on `User` model: `{ email: 1 }` for faster email lookups
+  - `{ fromUserId: 1, status: 1 }` for sent requests queries
+- Note: User email field already has a unique index (from `unique: true` property)
 
 **Impact:** Query times reduced by 50-90% for indexed fields, especially noticeable with large datasets.
 
@@ -180,8 +179,6 @@ All changes have been:
 db.messages.createIndex({ roomId: 1, createdAt: 1 });
 db.connectionrequestmodels.createIndex({ toUserId: 1, status: 1 });
 db.connectionrequestmodels.createIndex({ fromUserId: 1, status: 1 });
-db.connectionrequestmodels.createIndex({ status: 1 });
-db.users.createIndex({ email: 1 });
 ```
 
 ## Conclusion
