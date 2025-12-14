@@ -19,7 +19,7 @@ requestRouter.post(
         return res.status(400).json({message: "Invalid status value"+status});
       }
 
-      // Check if toUser exists and if connection request already exists in one query
+      // Check if toUser exists and if connection request already exists in parallel
       const [toUserExists, existingRequest] = await Promise.all([
         User.findById(toUserId).select("_id").lean(),
         ConnectionRequest.findOne({
