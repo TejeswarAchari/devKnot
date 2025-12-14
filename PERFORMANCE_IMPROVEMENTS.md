@@ -91,11 +91,11 @@ await mongoose.connect(process.env.MONGODB_URI, {
 
 **Changes:**
 ```javascript
-// Before: Sequential queries
+// Before: Sequential queries with incorrect validation
 const toUserExists = await User.findById(toUserId);
 const existingRequest = await ConnectionRequest.findOne(...);
 
-// After: Parallel queries
+// After: Parallel queries with correct validation
 const [toUserExists, existingRequest] = await Promise.all([
   User.findById(toUserId).select("_id").lean(),
   ConnectionRequest.findOne(...).lean()
@@ -105,6 +105,7 @@ const [toUserExists, existingRequest] = await Promise.all([
 **Impact:** 
 - Reduced validation time by ~50% (from 2 sequential queries to 1 parallel execution)
 - Improved `/request/send` endpoint response time
+- **Bug Fix:** Original code incorrectly checked ConnectionRequest instead of User existence
 
 ### 7. Removed Redundant Query Conditions
 
@@ -136,6 +137,16 @@ Based on common scenarios:
 | `/chat/history` (1000 messages) | ~200ms | ~140ms | **30% faster** |
 | `/request/send` | ~120ms | ~60ms | **50% faster** |
 | Authentication (per request) | ~25ms | ~20ms | **20% faster** |
+
+## Bug Fixes
+
+While optimizing the code, the following bug was discovered and fixed:
+
+**Fixed User Validation in `/request/send` endpoint:**
+- **Original bug:** Used `ConnectionRequest.find({ toUserId })` to check if user exists
+- **Issue:** This checked for connection requests TO the user, not if the user exists
+- **Fix:** Changed to `User.findById(toUserId)` to correctly validate user existence
+- **Impact:** Prevents invalid connection requests to non-existent users
 
 ## Scalability Improvements
 
