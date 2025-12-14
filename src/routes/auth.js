@@ -50,7 +50,7 @@ authRouter.post("/signup", async (req, res) => {
     const user = new User(userObj);
     const savedUser = await user.save();
 
-    const token = await savedUser.getJWT();
+    const token = savedUser.getJWT();
 
     res.cookie("token", token, buildCookieOptions());
 
@@ -80,7 +80,7 @@ authRouter.post("/login", async (req, res) => {
       throw new Error("Invalid Credentials");
     }
 
-    const token = await user.getJWT();
+    const token = user.getJWT();
 
     res.cookie("token", token, buildCookieOptions());
 

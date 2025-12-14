@@ -15,7 +15,7 @@ userRouter.get(
       const connectionRequests = await ConnectionRequest.find({
         toUserId: loggedInUser._id,
         status: "interested",
-      }).populate("fromUserId", "firstName lastName about gender skills photoUrl lastSeen");
+      }).populate("fromUserId", "firstName lastName about gender skills photoUrl lastSeen").lean();
 
       res.json({
         message: "Data fetched successfully",
@@ -38,26 +38,18 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
         { toUserId: loggedInUser._id, status: "accepted" },
         { fromUserId: loggedInUser._id, status: "accepted" },
       ],
-    }).select("fromUserId toUserId status"); // we just need ids here
+    })
+      .populate("fromUserId", "firstName lastName about age gender skills photoUrl lastSeen")
+      .populate("toUserId", "firstName lastName about age gender skills photoUrl lastSeen");
 
-    // For each connection, resolve the "other user" from User collection
-    const data = await Promise.all(
-      connectionRequests.map(async (row) => {
-        const meId = loggedInUser._id.toString();
+    // Extract the "other user" from each connection
+    const data = connectionRequests.map((row) => {
+      const meId = loggedInUser._id.toString();
+      const fromId = row.fromUserId._id.toString();
+      const toId = row.toUserId._id.toString();
 
-        const fromId = row.fromUserId.toString();
-        const toId = row.toUserId.toString();
-
-        const otherUserId = fromId === meId ? toId : fromId;
-
-        // fetch full user doc
-        const otherUser = await User.findById(otherUserId).select(
-          "firstName lastName about age gender skills photoUrl lastSeen"
-        );
-
-        return otherUser; // will be a clean user object
-      })
-    );
+      return fromId === meId ? row.toUserId : row.fromUserId;
+    });
 
     return res.json({ data });
   } catch (err) {
@@ -87,7 +79,7 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         { fromUserId: loggedInUser._id },
         { toUserId: loggedInUser._id },
       ],
-    }).select("fromUserId toUserId");
+    }).select("fromUserId toUserId").lean();
 
     // ---------- build set of users to hide from feed ----------
     const hideUsersFromFeed = new Set();
@@ -106,14 +98,12 @@ userRouter.get("/feed", userAuth, async (req, res) => {
 
     // ---------- fetch users for feed ----------
     const users = await User.find({
-      $and: [
-        { _id: { $nin: Array.from(hideUsersFromFeed) } }, // not in hidden set
-        { _id: { $ne: loggedInUser._id } },               // not me (extra safety)
-      ],
+      _id: { $nin: Array.from(hideUsersFromFeed) },
     })
-      .select("firstName lastName about age  gender skills photoUrl lastSeen") // e.g. "firstName lastName about gender skills photoUrl"
+      .select("firstName lastName about age  gender skills photoUrl lastSeen")
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     res.send(users);
   } catch (err) {

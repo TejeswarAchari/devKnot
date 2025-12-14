@@ -77,12 +77,17 @@ const userSchema = new mongoose.Schema({
    
 },{timestamps:true});
 
-userSchema.methods.getJWT = async function(){
+// Index for faster email lookups
+userSchema.index({ email: 1 });
+
+userSchema.methods.getJWT = function(){
     
     const user = this;
-    const token = await jwt.sign(
+    const token = jwt.sign(
         { userId: user._id, email: user.email },    
-        process.env.JWT_SECRET_KEY);  
+        process.env.JWT_SECRET_KEY,
+        { expiresIn: '7d' }
+    );  
     return token;
 }
 userSchema.methods.validatePassword = async function (passwordInputByUser) {
