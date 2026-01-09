@@ -31,7 +31,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-app.options("*", cors());
+app.options("/*", cors());
 
 // If you still want to manually handle OPTIONS, you can keep this,
 // but usually cors() handles it already:
