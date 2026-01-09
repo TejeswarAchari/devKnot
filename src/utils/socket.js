@@ -1,9 +1,7 @@
-
-
 // backend/socket.js (your socket initialization file)
 const socketIO = require("socket.io");
 const Message = require("../models/message");
-const User = require("../models/user"); // ✅ add this
+const User = require("../models/user"); 
 const fs = require("fs");
 const path = require("path");
 
@@ -17,11 +15,10 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 const initializeSocket = (server) => {
   const io = socketIO(server, {
     cors: {
-      origin:CLIENT_ORIGIN,
+      origin: CLIENT_ORIGIN,
       credentials: true,
     },
   });
-
 
   io.on("connection", (socket) => {
     // console.log("Socket connected:", socket.id);
@@ -46,27 +43,7 @@ const initializeSocket = (server) => {
       socket.emit("onlineUsersSnapshot", { users });
     });
 
-     /* ⭐⭐⭐ IMPORTANT FIX ⭐⭐⭐
-       User is leaving the tab → force mark offline immediately
-    */
-    socket.on("manualDisconnect", async () => {
-      const userId = socket.userId;
-      if (!userId) return;
-
-      const count = onlineUsers.get(userId) || 0;
-      if (count <= 1) {
-        onlineUsers.delete(userId);
-        const lastSeen = new Date();
-        try {
-          await User.findByIdAndUpdate(userId, { lastSeen });
-        } catch {}
-        io.emit("userOnlineStatus", { userId, isOnline: false, lastSeen });
-      } else {
-        onlineUsers.set(userId, count - 1);
-      }
-    });
-
-    socket.on("joinChat", ({ firstName, userId, targetUserId }) => {
+    socket.on("joinChat", ({ userId, targetUserId }) => {
       const roomId = [userId, targetUserId].sort().join("_");
       // console.log(firstName + " joined room " + roomId);
       socket.join(roomId);
@@ -232,6 +209,25 @@ const initializeSocket = (server) => {
       }
     });
 
+    /* ⭐⭐⭐ IMPORTANT FIX ⭐⭐⭐
+       User is leaving the tab → force mark offline immediately
+    */
+    socket.on("manualDisconnect", async () => {
+      const userId = socket.userId;
+      if (!userId) return;
+
+      const count = onlineUsers.get(userId) || 0;
+      if (count <= 1) {
+        onlineUsers.delete(userId);
+        const lastSeen = new Date();
+        try {
+          await User.findByIdAndUpdate(userId, { lastSeen });
+        } catch {}
+        io.emit("userOnlineStatus", { userId, isOnline: false, lastSeen });
+      } else {
+        onlineUsers.set(userId, count - 1);
+      }
+    });
     socket.on("disconnect", async () => {
       const userId = socket.userId;
 
@@ -267,5 +263,3 @@ const initializeSocket = (server) => {
 };
 
 module.exports = initializeSocket;
-
-

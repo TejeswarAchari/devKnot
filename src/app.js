@@ -1,4 +1,4 @@
-require("dotenv").config(); // 🔥 MUST BE FIRST LINE
+require("dotenv").config(); 
 const express = require("express");
 const connectDB = require("./config/database");
 const cors = require("cors");
@@ -9,8 +9,11 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const { userAuth } = require("./middlewares/auth");
 const User = require("./models/user");
+
+
 const http = require("http");
 const initializeSocket = require("./utils/socket");
+
 const path = require("path");
 
 const app = express();
@@ -28,6 +31,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+app.options("*", cors());
 
 // If you still want to manually handle OPTIONS, you can keep this,
 // but usually cors() handles it already:
