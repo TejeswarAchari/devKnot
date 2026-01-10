@@ -43,7 +43,8 @@ chatRouter.get("/chat/history/:targetUserId", userAuth, async (req, res) => {
 
     const messages = await Message.find({ roomId })
       .sort("createdAt")
-      .populate("fromUserId", "firstName lastName photoUrl");
+      .populate("fromUserId", "firstName lastName photoUrl")
+      .lean();
 
     res.json({ data: messages });
   } catch (err) {

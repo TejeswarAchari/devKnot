@@ -19,17 +19,20 @@ requestRouter.post(
         return res.status(400).json({message: "Invalid status value"+status});
       }
 
-      const toUserIdExists = await ConnectionRequest.find({ toUserId: toUserId });
-      if (!toUserIdExists) {
+      // Check if toUser exists and if connection request already exists in parallel
+      const [toUserExists, existingRequest] = await Promise.all([
+        User.findById(toUserId).select("_id").lean(),
+        ConnectionRequest.findOne({
+          $or: [
+            { fromUserId, toUserId },
+            { fromUserId: toUserId, toUserId: fromUserId },
+          ],
+        }).lean()
+      ]);
+
+      if (!toUserExists) {
         return res.status(404).json({ message: "The user you are trying to connect to does not exist." });
       }
-
-      const existingRequest = await ConnectionRequest.findOne({
-       $or: [
-          { fromUserId, toUserId },
-          { fromUserId: toUserId, toUserId: fromUserId },
-        ],
-      });
 
       if(existingRequest){
         return  res.status(409).json({ message: "Connection request already exists between these users." });
